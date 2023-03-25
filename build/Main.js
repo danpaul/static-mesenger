@@ -8,11 +8,9 @@ const Message_1 = __importDefault(require("./Message"));
 const Messenger_1 = __importDefault(require("./Messenger"));
 class Main {
     #selfUrl;
-    #publicDirRoot;
     #messenger;
     constructor({ selfUrl, publicDirRoot }) {
         this.#selfUrl = selfUrl;
-        this.#publicDirRoot = publicDirRoot;
         this.#messenger = new Messenger_1.default({ url: selfUrl, publicDirRoot });
     }
     getSelfUrl() {

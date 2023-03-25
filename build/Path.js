@@ -26,7 +26,7 @@ class Path {
         return `${Path.getToUrlBase({ selfUrl, toUrl })}/${messageId}.json`;
     }
     static async getMyReadDirBase({ publicDirRoot, toUrl, }) {
-        const dir = `${publicDirRoot}/${toUrl.getUserKey()}/${READ_PATH}`;
+        const dir = `${publicDirRoot}/${toUrl.getUserKey()}${READ_PATH}`;
         await fs.ensureDir(dir);
         return dir;
     }

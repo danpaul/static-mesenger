@@ -7,10 +7,9 @@ class Message {
     #id;
     #created;
     constructor(options) {
-        const inputData = typeof options === 'string' ? JSON.parse(options) : options;
-        this.#data = inputData.data || '';
-        this.#id = inputData.id || (0, uuid_1.v4)();
-        this.#created = inputData.created || Date.now();
+        this.#data = options.data || '';
+        this.#id = options.id || (0, uuid_1.v4)();
+        this.#created = options.created || new Date().toISOString();
     }
     get data() {
         return this.#data;

@@ -9,7 +9,7 @@ export default class Main {
     constructor({ selfUrl, publicDirRoot }: MainInterface);
     getSelfUrl(): UserUrl;
     sendMessage(url: UserUrl, data: MessageDataType): Promise<void>;
-    getMessages(url: UserUrl): Promise<null | Message[]>;
+    getMessages(url: UserUrl): Promise<Message[]>;
     markMessageAsRead(toUrl: UserUrl, message: Message): Promise<void>;
     updateMessageQueue(url: UserUrl): Promise<void>;
 }

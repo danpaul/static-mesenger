@@ -5,30 +5,51 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require('fs-extra');
 const axios_1 = __importDefault(require("axios"));
+const UserUrl_1 = __importDefault(require("./UserUrl"));
 const Message_1 = __importDefault(require("./Message"));
 const Path_1 = __importDefault(require("./Path"));
+const DEBUG = false;
+/**
+ * The `Messenger` class handles sending and receiving messages from and to
+ *  remote urls
+ */
 class Messenger {
     #selfUrl;
     #publicDirRoot;
-    constructor({ url, publicDirRoot }) {
-        this.#selfUrl = url;
+    /**
+     * @param { url } Url Url object for the local server
+     * @param { publicDirRoo } string The base directory for sending messages
+     */
+    constructor({ selfUrl, publicDirRoot, }) {
+        this.#selfUrl = this.getUrl(selfUrl);
         this.#publicDirRoot = publicDirRoot;
     }
-    async sendMessage(toUrl, message) {
-        /**
-         * Create message file
-         */
+    getUrl(url) {
+        return typeof url === 'string' ? new UserUrl_1.default({ url }) : url;
+    }
+    getSelfUrl() {
+        return this.#selfUrl;
+    }
+    /**
+     * @param { toUrl } Url|string Url object or string for the remote url
+     * @param { publicDirRoo } Message Message object to be sent to remote url
+     * @about Send message to remote url
+     */
+    async sendMessage(toUrl, messageInput) {
+        const message = messageInput instanceof Message_1.default
+            ? messageInput
+            : new Message_1.default({ data: messageInput });
+        // create a file path for the local message
         const file = await Path_1.default.getOutboundMessageFile({
-            toUrl,
+            toUrl: this.getUrl(toUrl),
             publicDirRoot: this.#publicDirRoot,
             message,
         });
+        // write message to file
         await fs.writeFile(file, message.toJson());
-        /**
-         * Add message to user's queue
-         */
+        // add message to remote urls queue so they are aware of the message
         const queueFile = await Path_1.default.getOutboundQueueFile({
-            toUrl,
+            toUrl: this.getUrl(toUrl),
             publicDirRoot: this.#publicDirRoot,
         });
         const queueFileExists = await fs.pathExists(queueFile);
@@ -36,21 +57,27 @@ class Messenger {
         if (queueFileExists) {
             messages = await fs.readJson(queueFile);
         }
-        // ASDF - TODO - update queue message
         messages = [message.id, ...messages];
         await fs.writeJson(queueFile, messages);
     }
+    /**
+     * @param { toUrl } Url|string Url object or string for the remote url
+     * @about Read messages from a remote url
+     */
     async getMessages(toUrl) {
         const remoteQueueUrl = Path_1.default.getRemoteQueueUrl({
             selfUrl: this.#selfUrl,
-            toUrl,
+            toUrl: this.getUrl(toUrl),
         });
+        if (DEBUG) {
+            console.log(`getting messages for ${this.getUrl(toUrl).getUrl()}`);
+        }
         try {
             const { data } = await axios_1.default.get(remoteQueueUrl);
             const messages = await Promise.all(data.map(async (messageId) => {
                 const readFilePath = await Path_1.default.getMyReadFilePath({
                     publicDirRoot: this.#publicDirRoot,
-                    toUrl,
+                    toUrl: this.getUrl(toUrl),
                     messageId,
                 });
                 const wasRead = await fs.pathExists(readFilePath);
@@ -58,32 +85,48 @@ class Messenger {
                     return null;
                 }
                 const { data } = await axios_1.default.get(Path_1.default.getRemoteMessageUrl({
-                    toUrl,
+                    toUrl: this.getUrl(toUrl),
                     selfUrl: this.#selfUrl,
                     messageId,
                 }));
                 return new Message_1.default(data);
             }));
-            return messages.filter((m) => m);
+            return messages.filter((m) => m).map((m) => m.toObject());
         }
         catch (error) {
-            return null;
+            return [];
         }
     }
+    /**
+     * @param { toUrl } Url|string Url object or string for the remote url
+     * @about Mark message as read so remote server can remove message from
+     *  their queue
+     */
     async markMessageAsRead(toUrl, message) {
+        if (DEBUG) {
+            console.log(`marking message ${message.id} as read`);
+        }
         const messagePath = await Path_1.default.getMyReadFilePath({
             publicDirRoot: this.#publicDirRoot,
-            toUrl,
+            toUrl: this.getUrl(toUrl),
             messageId: message.id,
         });
+        if (DEBUG) {
+            console.log(`message path: ${messagePath}`);
+        }
         await fs.writeJson(messagePath, new Message_1.default({
             id: message.id,
             data: { wasRead: true, messageId: message.id },
         }).toObject());
     }
+    /**
+     * @param { toUrl } Url|string Url object or string for the remote url
+     * @about Removes messages from local queue that the remote url has indicated
+     *  have been read.
+     */
     async removeReadMessagesFromQueue(toUrl) {
         const queueFile = await Path_1.default.getOutboundQueueFile({
-            toUrl,
+            toUrl: this.getUrl(toUrl),
             publicDirRoot: this.#publicDirRoot,
         });
         const queueFileExists = await fs.pathExists(queueFile);
@@ -93,7 +136,7 @@ class Messenger {
         const queue = await fs.readJson(queueFile);
         const urlDirectoryBase = Path_1.default.getUrlDirectoryBase({
             selfUrl: this.#selfUrl,
-            toUrl,
+            toUrl: this.getUrl(toUrl),
         });
         const wasRead = await Promise.all(queue.map(async (messageId) => {
             try {

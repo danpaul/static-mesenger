@@ -2,8 +2,10 @@ const fs = require('fs-extra')
 
 import axios from 'axios'
 import UserUrl from './UserUrl'
-import Message, { MessageDataType } from './Message'
+import Message, { MessageDataType, MessageObjectInterface } from './Message'
 import Path from './Path'
+
+const DEBUG = false
 
 type UrlInput = UserUrl | string
 
@@ -39,7 +41,7 @@ export default class Messenger {
   }
 
   /**
-   * @param { toUrl } Url Url object for the remote url
+   * @param { toUrl } Url|string Url object or string for the remote url
    * @param { publicDirRoo } Message Message object to be sent to remote url
    * @about Send message to remote url
    */
@@ -76,14 +78,17 @@ export default class Messenger {
   }
 
   /**
-   * @param { toUrl } Url Url object for the remote url
+   * @param { toUrl } Url|string Url object or string for the remote url
    * @about Read messages from a remote url
    */
-  async getMessages(toUrl: UrlInput): Promise<Message[]> {
+  async getMessages(toUrl: UrlInput): Promise<MessageObjectInterface[]> {
     const remoteQueueUrl = Path.getRemoteQueueUrl({
       selfUrl: this.#selfUrl,
       toUrl: this.getUrl(toUrl),
     })
+    if (DEBUG) {
+      console.log(`getting messages for ${this.getUrl(toUrl).getUrl()}`)
+    }
     try {
       const { data } = await axios.get(remoteQueueUrl)
       const messages = await Promise.all(
@@ -107,22 +112,31 @@ export default class Messenger {
           return new Message(data)
         })
       )
-      return messages.filter((m) => m)
+      return messages.filter((m) => m).map((m) => m.toObject())
     } catch (error) {
       return []
     }
   }
   /**
-   * @param { toUrl } Url Url object for the remote url
+   * @param { toUrl } Url|string Url object or string for the remote url
    * @about Mark message as read so remote server can remove message from
    *  their queue
    */
-  async markMessageAsRead(toUrl: UrlInput, message: Message): Promise<void> {
+  async markMessageAsRead(
+    toUrl: UrlInput,
+    message: Message | MessageObjectInterface
+  ): Promise<void> {
+    if (DEBUG) {
+      console.log(`marking message ${message.id} as read`)
+    }
     const messagePath = await Path.getMyReadFilePath({
       publicDirRoot: this.#publicDirRoot,
       toUrl: this.getUrl(toUrl),
       messageId: message.id,
     })
+    if (DEBUG) {
+      console.log(`message path: ${messagePath}`)
+    }
     await fs.writeJson(
       messagePath,
       new Message({
@@ -132,7 +146,7 @@ export default class Messenger {
     )
   }
   /**
-   * @param { toUrl } Url Url object for the remote url
+   * @param { toUrl } Url|string Url object or string for the remote url
    * @about Removes messages from local queue that the remote url has indicated
    *  have been read.
    */

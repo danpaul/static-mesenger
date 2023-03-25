@@ -3,9 +3,7 @@ const app = express()
 const fs = require('fs-extra')
 const assert = require('assert')
 
-import Main from './lib/Main'
 import Messenger from './lib/Messenger'
-import UserUrl from './lib/UserUrl'
 import Message from './lib/Message'
 
 const PORT = 3000
@@ -94,7 +92,9 @@ const test = async () => {
   console.log('getting message')
   messages = await messengerY.getMessages(USER_X_URL)
   assert(messages.length === 1, 'there should be one message')
-  assert(messages[0].toObject().data === 'hello!', 'message should be hello')
+  assert(messages[0].data === 'hello!', 'message should be hello')
+
+  console.log(messages[0])
 
   console.log('success!!!')
 }
