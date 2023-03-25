@@ -2,8 +2,10 @@ const fs = require('fs-extra')
 
 import axios from 'axios'
 import UserUrl from './UserUrl'
-import Message from './Message'
+import Message, { MessageDataType } from './Message'
 import Path from './Path'
+
+type UrlInput = UserUrl | string
 
 /**
  * The `Messenger` class handles sending and receiving messages from and to
@@ -17,9 +19,23 @@ export default class Messenger {
    * @param { url } Url Url object for the local server
    * @param { publicDirRoo } string The base directory for sending messages
    */
-  constructor({ url, publicDirRoot }: { url: UserUrl; publicDirRoot: string }) {
-    this.#selfUrl = url
+  constructor({
+    selfUrl,
+    publicDirRoot,
+  }: {
+    selfUrl: UrlInput
+    publicDirRoot: string
+  }) {
+    this.#selfUrl = this.getUrl(selfUrl)
     this.#publicDirRoot = publicDirRoot
+  }
+
+  getUrl(url: UrlInput): UserUrl {
+    return typeof url === 'string' ? new UserUrl({ url }) : url
+  }
+
+  getSelfUrl() {
+    return this.#selfUrl
   }
 
   /**
@@ -27,10 +43,18 @@ export default class Messenger {
    * @param { publicDirRoo } Message Message object to be sent to remote url
    * @about Send message to remote url
    */
-  async sendMessage(toUrl: UserUrl, message: Message): Promise<void> {
+  async sendMessage(
+    toUrl: UrlInput,
+    messageInput: Message | MessageDataType
+  ): Promise<void> {
+    const message =
+      messageInput instanceof Message
+        ? messageInput
+        : new Message({ data: messageInput })
+
     // create a file path for the local message
     const file = await Path.getOutboundMessageFile({
-      toUrl,
+      toUrl: this.getUrl(toUrl),
       publicDirRoot: this.#publicDirRoot,
       message,
     })
@@ -39,7 +63,7 @@ export default class Messenger {
 
     // add message to remote urls queue so they are aware of the message
     const queueFile = await Path.getOutboundQueueFile({
-      toUrl,
+      toUrl: this.getUrl(toUrl),
       publicDirRoot: this.#publicDirRoot,
     })
     const queueFileExists = await fs.pathExists(queueFile)
@@ -55,10 +79,10 @@ export default class Messenger {
    * @param { toUrl } Url Url object for the remote url
    * @about Read messages from a remote url
    */
-  async getMessages(toUrl: UserUrl): Promise<Message[]> {
+  async getMessages(toUrl: UrlInput): Promise<Message[]> {
     const remoteQueueUrl = Path.getRemoteQueueUrl({
       selfUrl: this.#selfUrl,
-      toUrl,
+      toUrl: this.getUrl(toUrl),
     })
     try {
       const { data } = await axios.get(remoteQueueUrl)
@@ -66,7 +90,7 @@ export default class Messenger {
         data.map(async (messageId: string) => {
           const readFilePath = await Path.getMyReadFilePath({
             publicDirRoot: this.#publicDirRoot,
-            toUrl,
+            toUrl: this.getUrl(toUrl),
             messageId,
           })
           const wasRead = await fs.pathExists(readFilePath)
@@ -75,7 +99,7 @@ export default class Messenger {
           }
           const { data } = await axios.get(
             Path.getRemoteMessageUrl({
-              toUrl,
+              toUrl: this.getUrl(toUrl),
               selfUrl: this.#selfUrl,
               messageId,
             })
@@ -93,10 +117,10 @@ export default class Messenger {
    * @about Mark message as read so remote server can remove message from
    *  their queue
    */
-  async markMessageAsRead(toUrl: UserUrl, message: Message): Promise<void> {
+  async markMessageAsRead(toUrl: UrlInput, message: Message): Promise<void> {
     const messagePath = await Path.getMyReadFilePath({
       publicDirRoot: this.#publicDirRoot,
-      toUrl,
+      toUrl: this.getUrl(toUrl),
       messageId: message.id,
     })
     await fs.writeJson(
@@ -112,9 +136,9 @@ export default class Messenger {
    * @about Removes messages from local queue that the remote url has indicated
    *  have been read.
    */
-  async removeReadMessagesFromQueue(toUrl: UserUrl): Promise<void> {
+  async removeReadMessagesFromQueue(toUrl: UrlInput): Promise<void> {
     const queueFile = await Path.getOutboundQueueFile({
-      toUrl,
+      toUrl: this.getUrl(toUrl),
       publicDirRoot: this.#publicDirRoot,
     })
     const queueFileExists = await fs.pathExists(queueFile)
@@ -124,7 +148,7 @@ export default class Messenger {
     const queue = await fs.readJson(queueFile)
     const urlDirectoryBase = Path.getUrlDirectoryBase({
       selfUrl: this.#selfUrl,
-      toUrl,
+      toUrl: this.getUrl(toUrl),
     })
     const wasRead = await Promise.all(
       queue.map(async (messageId: string) => {

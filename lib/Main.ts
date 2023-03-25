@@ -1,6 +1,5 @@
 const fs = require('fs-extra')
 
-import axios from 'axios'
 import UserUrl from './UserUrl'
 import Message, { MessageDataType } from './Message'
 import Messenger from './Messenger'

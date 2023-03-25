@@ -15,12 +15,12 @@ export default class Message {
   #id: string
   #created: number
 
-  constructor(options: MessageCreateInterface | string) {
-    const inputData =
-      typeof options === 'string' ? JSON.parse(options) : options
-    this.#data = inputData.data || ''
-    this.#id = inputData.id || uuidv4()
-    this.#created = inputData.created || Date.now()
+  constructor(options: MessageCreateInterface) {
+    // const inputData =
+    //   typeof options === 'string' ? JSON.parse(options) : options
+    this.#data = options.data || ''
+    this.#id = options.id || uuidv4()
+    this.#created = options.created || Date.now()
   }
 
   get data() {

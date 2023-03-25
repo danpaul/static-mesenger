@@ -4,8 +4,9 @@ const fs = require('fs-extra')
 const assert = require('assert')
 
 import Main from './lib/Main'
-// import Messenger from './lib/Messenger'
+import Messenger from './lib/Messenger'
 import UserUrl from './lib/UserUrl'
+import Message from './lib/Message'
 
 const PORT = 3000
 const TEST_DIR = `${__dirname}/.test`
@@ -17,25 +18,32 @@ app.listen(PORT)
 const test = async () => {
   console.log('cleaning test dir')
   await fs.remove(TEST_DIR)
-  const users: { [key: string]: Main } = {}
+  const users: { [key: string]: Messenger } = {}
 
   for (const letter of ['a', 'b']) {
     console.log(`creating user: ${letter}`)
     await fs.ensureDir(`${TEST_DIR}/${letter}`)
-    users[letter] = new Main({
-      selfUrl: new UserUrl({ url: `${URL_BASE}/${letter}` }),
+    users[letter] = new Messenger({
+      selfUrl: `${URL_BASE}/${letter}`,
       publicDirRoot: `${TEST_DIR}/${letter}`,
     })
   }
 
-  console.log('getting 0 messages')
   let messages = await users['a'].getMessages(users['b'].getSelfUrl())
   assert(messages?.length === 0, 'There should be no messages')
 
-  console.log('adding messages')
-  await users['a'].sendMessage(users['b'].getSelfUrl(), 'hello1')
-  await users['a'].sendMessage(users['b'].getSelfUrl(), 'hello2')
-  await users['a'].sendMessage(users['b'].getSelfUrl(), 'hello3')
+  await users['a'].sendMessage(
+    users['b'].getSelfUrl(),
+    new Message({ data: 'hello1' })
+  )
+  await users['a'].sendMessage(
+    users['b'].getSelfUrl(),
+    new Message({ data: 'hello2' })
+  )
+  await users['a'].sendMessage(
+    users['b'].getSelfUrl(),
+    new Message({ data: 'hello3' })
+  )
 
   console.log('getting 3 messages')
   messages = await users['b'].getMessages(users['a'].getSelfUrl())
@@ -66,7 +74,28 @@ const test = async () => {
   messages = await users['b'].getMessages(users['a'].getSelfUrl())
   assert(messages?.length === 0, 'There should be no messages')
 
-  await users['a'].updateMessageQueue(users['b'].getSelfUrl())
+  await users['a'].removeReadMessagesFromQueue(users['b'].getSelfUrl())
+
+  const USER_X_URL = `${URL_BASE}/x`
+  const USER_Y_URL = `${URL_BASE}/y`
+
+  console.log('creating basic string based messengers')
+  const messengerX = new Messenger({
+    selfUrl: USER_X_URL,
+    publicDirRoot: `${TEST_DIR}/x`,
+  })
+  const messengerY = new Messenger({
+    selfUrl: USER_Y_URL,
+    publicDirRoot: `${TEST_DIR}/x`,
+  })
+
+  console.log('sending message')
+  await messengerX.sendMessage(USER_Y_URL, 'hello!')
+  console.log('getting message')
+  messages = await messengerY.getMessages(USER_X_URL)
+  assert(messages.length === 1, 'there should be one message')
+  assert(messages[0].toObject().data === 'hello!', 'message should be hello')
+
   console.log('success!!!')
 }
 
