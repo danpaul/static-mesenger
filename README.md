@@ -43,7 +43,7 @@ let messages = await messenger.getMessages(otherUrl)
  *    created: '2023-03-25T19:09:33.743Z'
  *  }
  */
-messenger.markMessageAsRead(otherUrl, messages[0])
+await messenger.markMessageAsRead(otherUrl, messages[0])
 
 messages = await messenger.getMessages(otherUrl)
 console.log(messages.length) // ~> 0
