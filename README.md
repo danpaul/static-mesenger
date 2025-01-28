@@ -49,11 +49,3 @@ messages = await messenger.getMessages(otherUrl)
 console.log(messages.length) // ~> 0
 
 ```
-
-## TODO
-
-- set non-root data directory path
-- remove duplicate message ID for queue file
-- use standard message objects in queue file
-- move message queue cleanup utility to queue write
-- publish to NPM
