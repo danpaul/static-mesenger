@@ -19,7 +19,7 @@ export default class Messenger {
 
   /**
    * @param { url } Url Url object for the local server
-   * @param { publicDirRoo } string The base directory for sending messages
+   * @param { publicDirRoot } string The base directory for sending messages
    */
   constructor({
     selfUrl,
@@ -42,7 +42,7 @@ export default class Messenger {
 
   /**
    * @param { toUrl } Url|string Url object or string for the remote url
-   * @param { publicDirRoo } Message Message object to be sent to remote url
+   * @param { publicDirRoot } Message Message object to be sent to remote url
    * @about Send message to remote url
    */
   async sendMessage(
