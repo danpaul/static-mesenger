@@ -49,3 +49,7 @@ messages = await messenger.getMessages(otherUrl)
 console.log(messages.length) // ~> 0
 
 ```
+
+## Installation
+
+`npm i static-messenger --save`
