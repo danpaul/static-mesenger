@@ -2,6 +2,7 @@ const fs = require('fs-extra')
 
 import axios from 'axios'
 import UserUrl from './UserUrl'
+// import UserUrl from './index'
 import Message, { MessageDataType, MessageObjectInterface } from './Message'
 import Path from './Path'
 import { json } from 'node:stream/consumers'
