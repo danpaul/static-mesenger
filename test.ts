@@ -3,8 +3,8 @@ const app = express()
 const fs = require('fs-extra')
 const assert = require('assert')
 
-import Messenger from './lib/Messenger'
-import Message from './lib/Message'
+import Messenger from './src/Messenger'
+import Message from './src/Message'
 
 const PORT = 3000
 const TEST_DIR = `${__dirname}/.test`
@@ -86,7 +86,7 @@ const test = async () => {
   /**
    * Test set 2
    */
-
+  console.log('success!!!')
   return
 
   const USER_X_URL = `${URL_BASE}/x`

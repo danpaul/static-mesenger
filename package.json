@@ -1,12 +1,16 @@
 {
   "name": "static-messenger",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
-  "main": "./index.js",
-  "types": "./build/index.d.ts",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "scripts": {
     "test": "ts-node test.ts",
     "build": "tsc"
+  },
+  "exports": {
+    "import": "./build/index.js",
+    "require": "./build/index.js"
   },
   "author": "",
   "license": "ISC",

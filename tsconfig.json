@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./build",
-    "declaration": true
+    "declaration": true,
+    "rootDir": "src"
   },
-  "include": ["./lib/**/*"]
+  "include": ["src/**/*"]
 }
