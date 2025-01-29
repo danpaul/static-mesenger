@@ -4,6 +4,7 @@ import axios from 'axios'
 import UserUrl from './UserUrl'
 import Message, { MessageDataType, MessageObjectInterface } from './Message'
 import Path from './Path'
+import { json } from 'node:stream/consumers'
 
 const DEBUG = false
 
@@ -137,6 +138,7 @@ export default class Messenger {
     if (DEBUG) {
       console.log(`message path: ${messagePath}`)
     }
+
     await fs.writeJson(
       messagePath,
       new Message({
@@ -160,16 +162,22 @@ export default class Messenger {
       return
     }
     const queue = await fs.readJson(queueFile)
+
     const urlDirectoryBase = Path.getUrlDirectoryBase({
-      selfUrl: this.#selfUrl,
-      toUrl: this.getUrl(toUrl),
+      selfUrl: this.getUrl(toUrl),
+      toUrl: this.#selfUrl,
     })
     const wasRead = await Promise.all(
       queue.map(async (messageId: string) => {
         try {
+          console.log(`${urlDirectoryBase}/read/${messageId}.json`)
           const { data } = await axios.get(
             `${urlDirectoryBase}/read/${messageId}.json`
           )
+
+          // console.log(data)
+
+          // console.log(data)
           if (data?.data?.wasRead) {
             return { messageId, wasRead: true }
           }
@@ -178,6 +186,10 @@ export default class Messenger {
         }
       })
     )
+
+    // asdf
+    // console.log('was read', wasRead)
+
     const updatedQueue = wasRead
       .filter(({ wasRead }) => !wasRead)
       .map(({ messageId }) => messageId)

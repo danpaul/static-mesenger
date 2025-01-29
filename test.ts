@@ -51,12 +51,11 @@ const test = async () => {
   console.log('getting 3 messages')
   messages = await users['b'].getMessages(users['a'].getSelfUrl())
   assert(messages?.length === 3, 'There should be three messages')
-  console.log(messages)
 
   // confirm newest message is first
   assert(messages[0].data == 'hello3', 'The newest message should be first')
 
-  // mrak messages as read
+  // mark messages as read
   if (messages?.[0]) {
     console.log('marking message as read')
     await users['b'].markMessageAsRead(users['a'].getSelfUrl(), messages[0])
@@ -84,27 +83,46 @@ const test = async () => {
 
   await users['a'].removeReadMessagesFromQueue(users['b'].getSelfUrl())
 
-  // const USER_X_URL = `${URL_BASE}/x`
-  // const USER_Y_URL = `${URL_BASE}/y`
+  /**
+   * Test set 2
+   */
 
-  // console.log('creating basic string based messengers')
-  // const messengerX = new Messenger({
-  //   selfUrl: USER_X_URL,
-  //   publicDirRoot: `${TEST_DIR}/x`,
-  // })
-  // const messengerY = new Messenger({
-  //   selfUrl: USER_Y_URL,
-  //   publicDirRoot: `${TEST_DIR}/x`,
-  // })
+  return
 
-  // console.log('sending message')
-  // await messengerX.sendMessage(USER_Y_URL, 'hello!')
-  // console.log('getting message')
-  // messages = await messengerY.getMessages(USER_X_URL)
-  // assert(messages.length === 1, 'there should be one message')
-  // assert(messages[0].data === 'hello!', 'message should be hello')
+  const USER_X_URL = `${URL_BASE}/x`
+  const USER_Y_URL = `${URL_BASE}/y`
 
-  // console.log(messages[0])
+  const messengerX = new Messenger({
+    selfUrl: USER_X_URL,
+    publicDirRoot: `${TEST_DIR}/x`,
+  })
+  const messengerY = new Messenger({
+    selfUrl: USER_Y_URL,
+    publicDirRoot: `${TEST_DIR}/y`,
+  })
+
+  const numberOfTestMessages = 100
+
+  for (let i = 0; i < numberOfTestMessages; i++) {
+    await messengerY.sendMessage(USER_X_URL, i.toString())
+  }
+
+  messages = await messengerX.getMessages(messengerY.getSelfUrl())
+
+  assert(
+    messages.length === numberOfTestMessages,
+    `there should be ${numberOfTestMessages} message but there are ${messages.length}`
+  )
+
+  for await (const message of messages) {
+    messengerX.markMessageAsRead(messengerY.getSelfUrl(), message)
+  }
+
+  messages = await messengerX.getMessages(messengerY.getSelfUrl())
+
+  assert(messages.length === 0, `there should no longer be any messages`)
+
+  await messengerY.removeReadMessagesFromQueue(messengerX.getSelfUrl())
 
   console.log('success!!!')
 }
