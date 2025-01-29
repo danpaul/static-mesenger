@@ -170,14 +170,10 @@ export default class Messenger {
     const wasRead = await Promise.all(
       queue.map(async (messageId: string) => {
         try {
-          console.log(`${urlDirectoryBase}/read/${messageId}.json`)
           const { data } = await axios.get(
             `${urlDirectoryBase}/read/${messageId}.json`
           )
 
-          // console.log(data)
-
-          // console.log(data)
           if (data?.data?.wasRead) {
             return { messageId, wasRead: true }
           }
@@ -186,9 +182,6 @@ export default class Messenger {
         }
       })
     )
-
-    // asdf
-    // console.log('was read', wasRead)
 
     const updatedQueue = wasRead
       .filter(({ wasRead }) => !wasRead)

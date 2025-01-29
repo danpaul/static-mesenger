@@ -18,7 +18,7 @@ class Messenger {
     #publicDirRoot;
     /**
      * @param { url } Url Url object for the local server
-     * @param { publicDirRoo } string The base directory for sending messages
+     * @param { publicDirRoot } string The base directory for sending messages
      */
     constructor({ selfUrl, publicDirRoot, }) {
         this.#selfUrl = this.getUrl(selfUrl);
@@ -32,7 +32,7 @@ class Messenger {
     }
     /**
      * @param { toUrl } Url|string Url object or string for the remote url
-     * @param { publicDirRoo } Message Message object to be sent to remote url
+     * @param { publicDirRoot } Message Message object to be sent to remote url
      * @about Send message to remote url
      */
     async sendMessage(toUrl, messageInput) {
@@ -135,8 +135,8 @@ class Messenger {
         }
         const queue = await fs.readJson(queueFile);
         const urlDirectoryBase = Path_1.default.getUrlDirectoryBase({
-            selfUrl: this.#selfUrl,
-            toUrl: this.getUrl(toUrl),
+            selfUrl: this.getUrl(toUrl),
+            toUrl: this.#selfUrl,
         });
         const wasRead = await Promise.all(queue.map(async (messageId) => {
             try {

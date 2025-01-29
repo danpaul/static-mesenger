@@ -9,7 +9,7 @@ export default class Messenger {
     #private;
     /**
      * @param { url } Url Url object for the local server
-     * @param { publicDirRoo } string The base directory for sending messages
+     * @param { publicDirRoot } string The base directory for sending messages
      */
     constructor({ selfUrl, publicDirRoot, }: {
         selfUrl: UrlInput;
@@ -19,7 +19,7 @@ export default class Messenger {
     getSelfUrl(): UserUrl;
     /**
      * @param { toUrl } Url|string Url object or string for the remote url
-     * @param { publicDirRoo } Message Message object to be sent to remote url
+     * @param { publicDirRoot } Message Message object to be sent to remote url
      * @about Send message to remote url
      */
     sendMessage(toUrl: UrlInput, messageInput: Message | MessageDataType): Promise<void>;
